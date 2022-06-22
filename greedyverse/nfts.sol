@@ -30,6 +30,7 @@ contract greedyverseNfts is ERC1155, Ownable{
 
     bool public Mint = false;
     bool public PublicMint = false;
+    bool public sendingLocked = false;
 
 
     constructor() ERC1155("https://greedyverse.co/api/getNftMetaData.php?id={id}"){
@@ -46,13 +47,13 @@ contract greedyverseNfts is ERC1155, Ownable{
     }
 
     function whiteListMint(uint256 id, uint256 amount) public payable{
-        require(PublicMint, "Private mint is ended");
+        require(!PublicMint, "Private mint is ended");
         require(isWhiteListed[msg.sender], "Address not whitelisted for minting");
         _mint(id,amount);
     }
 
       function mint(uint256 id, uint256 amount) public payable{
-        require(!PublicMint, "Private mint is ended");
+        require(PublicMint, "Public mint not started");
         _mint(id,amount);
     }
 
@@ -70,17 +71,20 @@ contract greedyverseNfts is ERC1155, Ownable{
          }else{
              require((singlePlayeramount[msg.sender][id].add(amount) <= spMaxNftAmount_perNft), "You can not mint more than 10 of any NFT except walls");
          }
-         depositeProceeds();
+         depositProceeds();
          mintedNftsAmount[id] = mintedNftsAmount[id].add(amount);
         _mint(msg.sender, id, amount, "");
         singlePlayeramount[msg.sender][id] = singlePlayeramount[msg.sender][id].add(amount);
     }
 
-    function depositeProceeds() private {
+    function depositProceeds() private {
+        require(!sendingLocked,"Re-entrancy Detected");
+        sendingLocked = true;
         (bool success1, ) = gameContract.call{value: msg.value.div(2)}("");
         require(success1, "Failed to deposite to gameContract");
         (bool success2, ) = teamWallet.call{value: msg.value.div(2)}("");
         require(success2, "Failed to team wallet");
+        sendingLocked = false;
     }
 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) public override {
@@ -102,8 +106,25 @@ contract greedyverseNfts is ERC1155, Ownable{
         singlePlayeramount[to][id] = singlePlayeramount[to][id] + amount;
     }
 
-    function getPlayerNftCount(address account, uint256 id) public view returns(uint256){
-        return singlePlayeramount[account][id];
+    function safeBatchTransferFrom(address from,address to,uint256[] memory ids,uint256[] memory amounts,bytes memory data) public override{
+        require(
+                from == _msgSender() || isApprovedForAll(from, _msgSender()),
+                "ERC1155: caller is not token owner nor approved"
+        );
+        for(uint256 i = 0; i < ids.length;i++){
+            uint id = ids[i];
+            uint amount = amounts[i];
+            if(id == 2){
+             require((singlePlayeramount[to][id].add(amount) <= MaxWoodWall_per_player), "No address can own more than 40 wood walls");
+            }else if(id == 3){
+                require((singlePlayeramount[to][id].add(amount) <= MaxStoneWall_per_player), "No address can own more than 40 stone walls");
+            }else if(id == 29){
+                require((singlePlayeramount[to][id].add(amount) <= MaxLand_per_player), "No address can own more than 1 land");
+            }else{
+                require((singlePlayeramount[to][id].add(amount) <= spMaxNftAmount_perNft), "No address can own more than 10 of any NFT except walls");
+            }
+        }
+        _safeBatchTransferFrom(from,to,ids,amounts,data);
     }
 
 
@@ -115,11 +136,11 @@ contract greedyverseNfts is ERC1155, Ownable{
         Mint = false;
     }
 
-     function starPrivatetMint() public onlyOwner{
-        PublicMint = true;
+     function starPrivateMint() public onlyOwner{
+        PublicMint = false;
     }
 
-    function endPrivatetMint() public onlyOwner{
-        PublicMint = false;
+    function endPrivateMint() public onlyOwner{
+        PublicMint = true;
     }
 }
