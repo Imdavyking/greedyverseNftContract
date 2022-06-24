@@ -18,7 +18,7 @@ contract greedyverseNfts is ERC1155, Ownable{
      uint256 public spMaxNftAmount_perNft = 10;
      uint256 public MaxStoneWall_per_player = 20;
      uint256 public MaxWoodWall_per_player = 20;
-     uint256 public MaxLand_per_player = 1;
+     uint256 public MaxLand_per_player = 5;
 
 
     mapping(address => bool) public isWhiteListed;
@@ -62,7 +62,7 @@ contract greedyverseNfts is ERC1155, Ownable{
          }else if(id == 3){
              require((balanceOf(msg.sender,id) + amount <= MaxStoneWall_per_player), "You can not mint more than 40 stone walls");
          }else if(id == 29){
-             require((balanceOf(msg.sender,id) + amount <= MaxLand_per_player), "You can not mint more than 1 land");
+             require((balanceOf(msg.sender,id) + amount <= MaxLand_per_player), "You can not mint more than 5 lands");
          }else{
              require((balanceOf(msg.sender,id) + amount <= spMaxNftAmount_perNft), "You can not mint more than 10 of any NFT except walls");
          }
@@ -91,7 +91,7 @@ contract greedyverseNfts is ERC1155, Ownable{
          }else if(id == 3){
              require((balanceOf(to,id) + amount <= MaxStoneWall_per_player), "No address can own more than 40 stone walls");
          }else if(id == 29){
-             require((balanceOf(to,id) + amount <= MaxLand_per_player), "No address can own more than 1 land");
+             require((balanceOf(to,id) + amount <= MaxLand_per_player), "No address can own more than 5 lands");
          }else{
              require((balanceOf(to,id) + amount <= spMaxNftAmount_perNft), "No address can own more than 10 of any NFT except walls");
          }
@@ -112,7 +112,7 @@ contract greedyverseNfts is ERC1155, Ownable{
             }else if(id == 3){
                 require((balanceOf(to,id) + amount <= MaxStoneWall_per_player), "No address can own more than 40 stone walls");
             }else if(id == 29){
-                require((balanceOf(to,id) + amount <= MaxLand_per_player), "No address can own more than 1 land");
+                require((balanceOf(to,id) + amount <= MaxLand_per_player), "No address can own more than 5 lands");
             }else{
                 require((balanceOf(to,id) + amount <= spMaxNftAmount_perNft), "No address can own more than 10 of any NFT except walls");
             }
